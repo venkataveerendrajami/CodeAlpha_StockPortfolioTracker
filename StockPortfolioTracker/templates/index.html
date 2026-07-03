@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StockTrack | Stock Portfolio Tracker</title>
+
+  <!-- Fonts: Space Grotesk for display, Inter for body, JetBrains Mono for numbers -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+
+  <!-- ===================== Background gradient blobs ===================== -->
+  <div class="bg-blob bg-blob--one" aria-hidden="true"></div>
+  <div class="bg-blob bg-blob--two" aria-hidden="true"></div>
+
+  <!-- ===================== Navbar ===================== -->
+  <nav class="navbar navbar-expand-lg sticky-top app-navbar">
+    <div class="container">
+      <a class="navbar-brand brand" href="#top">
+        <span class="brand__mark"><i class="bi bi-graph-up-arrow"></i></span>
+        Stock<span class="brand__accent">Track</span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navMenu">
+        <ul class="navbar-nav ms-auto gap-lg-2">
+          <li class="nav-item"><a class="nav-link" href="#dashboard">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="#add-stock">Add Stock</a></li>
+          <li class="nav-item"><a class="nav-link" href="#portfolio">Portfolio</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===================== Ticker tape ===================== -->
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker__track" id="ticker-track">
+      <!-- duplicated stock items injected by JS for a seamless scroll -->
+    </div>
+  </div>
+
+  <!-- ===================== Hero ===================== -->
+  <header id="top" class="hero">
+    <div class="container">
+      <div class="row align-items-center g-5">
+        <div class="col-lg-7">
+          <p class="eyebrow"><i class="bi bi-shield-check"></i> Manual price tracking, made effortless</p>
+          <h1 class="hero__title">
+            Track your stock portfolio with <span class="text-gradient">total clarity</span>
+          </h1>
+          <p class="hero__subtitle">
+            Add your holdings, and StockTrack instantly calculates each position's
+            value and your total investment — all in a clean, modern dashboard.
+          </p>
+          <div class="d-flex flex-wrap gap-3">
+            <a href="#add-stock" class="btn btn-gradient btn-lg">
+              <i class="bi bi-plus-circle"></i> Add Your First Stock
+            </a>
+            <a href="#portfolio" class="btn btn-outline-glass btn-lg">
+              View Portfolio
+            </a>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="glass-card hero-card">
+            <p class="hero-card__label">Available Symbols</p>
+            <ul class="hero-card__list" id="hero-price-list">
+              <!-- populated by JS from /api/stocks -->
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- ===================== Dashboard summary cards ===================== -->
+    <section id="dashboard" class="section">
+      <div class="section__heading">
+        <p class="eyebrow"><i class="bi bi-speedometer2"></i> Overview</p>
+        <h2>Portfolio Dashboard</h2>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-6 col-lg-3">
+          <div class="glass-card stat-card stat-card--anim">
+            <div class="stat-card__icon"><i class="bi bi-stack"></i></div>
+            <p class="stat-card__label">Total Stocks Added</p>
+            <p class="stat-card__value" id="stat-total-stocks">0</p>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="glass-card stat-card stat-card--anim">
+            <div class="stat-card__icon"><i class="bi bi-bar-chart-line"></i></div>
+            <p class="stat-card__label">Total Shares</p>
+            <p class="stat-card__value" id="stat-total-shares">0</p>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="glass-card stat-card stat-card--anim">
+            <div class="stat-card__icon"><i class="bi bi-trophy"></i></div>
+            <p class="stat-card__label">Top Holding</p>
+            <p class="stat-card__value" id="stat-top-holding">—</p>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="glass-card stat-card stat-card--anim stat-card--highlight">
+            <div class="stat-card__icon"><i class="bi bi-wallet2"></i></div>
+            <p class="stat-card__label">Total Investment Value</p>
+            <p class="stat-card__value" id="stat-total-value">$0</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Add stock form ===================== -->
+    <section id="add-stock" class="section">
+      <div class="section__heading">
+        <p class="eyebrow"><i class="bi bi-plus-circle"></i> Build your portfolio</p>
+        <h2>Add a Stock</h2>
+      </div>
+
+      <div class="glass-card form-card">
+        <form id="add-stock-form" class="row g-3 needs-validation" novalidate>
+
+          <div class="col-md-5">
+            <label for="symbol-input" class="form-label">Stock Symbol</label>
+            <input
+              type="text"
+              class="form-control form-control-lg app-input"
+              id="symbol-input"
+              name="symbol"
+              placeholder="e.g. AAPL"
+              list="symbol-options"
+              autocomplete="off"
+              required
+            />
+            <datalist id="symbol-options"></datalist>
+            <div class="invalid-feedback">Enter a valid symbol from the list below.</div>
+          </div>
+
+          <div class="col-md-4">
+            <label for="quantity-input" class="form-label">Quantity</label>
+            <input
+              type="number"
+              class="form-control form-control-lg app-input"
+              id="quantity-input"
+              name="quantity"
+              placeholder="e.g. 10"
+              min="1"
+              step="1"
+              required
+            />
+            <div class="invalid-feedback">Enter a whole number greater than zero.</div>
+          </div>
+
+          <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-gradient btn-lg w-100">
+              <i class="bi bi-plus-lg"></i> Add Stock
+            </button>
+          </div>
+        </form>
+
+        <p class="form-hint">
+          <i class="bi bi-info-circle"></i>
+          Available symbols: <span id="symbol-hint">AAPL, TSLA, GOOGL, MSFT, AMZN</span>
+        </p>
+      </div>
+    </section>
+
+    <!-- ===================== Portfolio table ===================== -->
+    <section id="portfolio" class="section">
+      <div class="section__heading section__heading--row">
+        <div>
+          <p class="eyebrow"><i class="bi bi-table"></i> Your holdings</p>
+          <h2>Portfolio Summary</h2>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button type="button" id="export-btn" class="btn btn-outline-glass">
+            <i class="bi bi-download"></i> Export CSV
+          </button>
+          <button type="button" id="clear-btn" class="btn btn-outline-danger-glass">
+            <i class="bi bi-trash3"></i> Clear Portfolio
+          </button>
+        </div>
+      </div>
+
+      <div class="glass-card table-card">
+        <div class="table-responsive">
+          <table class="table app-table align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Quantity</th>
+                <th>Price (USD)</th>
+                <th>Investment Value</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody id="portfolio-body">
+              <tr id="empty-row">
+                <td colspan="5" class="empty-state">
+                  <i class="bi bi-inbox"></i>
+                  No stocks added yet. Use the form above to build your portfolio.
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="table-total-row">
+                <td colspan="3" class="text-end fw-semibold">Total Investment Value</td>
+                <td class="fw-bold" id="footer-total-value">$0</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================== Footer ===================== -->
+  <footer class="app-footer">
+    <div class="container">
+      <div class="row gy-4 align-items-center">
+        <div class="col-md-6">
+          <a class="brand" href="#top">
+            <span class="brand__mark"><i class="bi bi-graph-up-arrow"></i></span>
+            Stock<span class="brand__accent">Track</span>
+          </a>
+          <p class="app-footer__tagline">A simple, manual-price portfolio tracker built with Flask &amp; Bootstrap.</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <p class="app-footer__note">Built for the CodeAlpha Python Internship Program</p>
+          <p class="app-footer__copyright">&copy; <span id="footer-year"></span> StockTrack. All values are for demonstration purposes.</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===================== Toast notifications ===================== -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toast-container"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
